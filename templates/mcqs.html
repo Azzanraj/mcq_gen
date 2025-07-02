@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Generated Quiz</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='stylesm.css') }}">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="quiz-header">
+      <h1>Smart MCQ Generator</h1>
+      <p class="subtitle">Questions from your uploaded content</p>
+      <div class="ai-badge">
+        <i class="fas fa-robot"></i> AI Powered
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="quiz-stats">
+      <div class="stat-item">
+        <span class="stat-number" id="totalQuestions">{{ mcqs|length }}</span>
+        <div class="stat-label">Questions</div>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number" id="answered">0</span>
+        <div class="stat-label">Answered</div>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number" id="progress">0%</span>
+        <div class="stat-label">Complete</div>
+      </div>
+    </div>
+
+    <!-- Questions -->
+    {% for index, mcq in mcqs %}
+      <div class="question-card" data-question="{{ index }}">
+        <div class="question-header">
+          <span class="question-number">Q{{ index }}</span>
+          <span class="question-text">{{ mcq[0] }}</span>
+        </div>
+
+        <div class="options-container">
+          {% set options = ['A', 'B', 'C', 'D'] %}
+          {% for choice_index in range(mcq[1]|length) %}
+            <div class="option-wrapper">
+              <input type="radio" name="q{{ index }}" id="q{{ index }}_{{ choice_index }}" value="{{ options[choice_index] }}" onclick="updateAnswer({{ index }})">
+              <label for="q{{ index }}_{{ choice_index }}">
+                <span class="option-letter">{{ options[choice_index] }}</span>
+                {{ mcq[1][choice_index] }}
+              </label>
+            </div>
+          {% endfor %}
+        </div>
+
+        <div class="correct-answer" style="display:none">
+          <i class="fas fa-check-circle"></i> Correct: {{ mcq[2] }}
+        </div>
+      </div>
+    {% endfor %}
+
+    <!-- Action -->
+    <div class="action-section">
+      <div class="quiz-completion-message" id="completionMessage" style="display:none">
+        <i class="fas fa-check-circle"></i> Quiz completed! Ready to see the answers?
+      </div>
+
+      <div class="btn-container">
+        <button class="btn btn-reveal" onclick="showAnswers()" id="revealBtn">
+          <i class="fas fa-eye"></i> Show Answers
+        </button>
+        <a href="/" class="btn">
+          <i class="fas fa-arrow-left"></i> New Quiz
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const totalQuestions = {{ mcqs|length }};
+    const answered = new Array(totalQuestions).fill(false);
+
+    function updateAnswer(index) {
+      answered[index - 1] = true;
+      const count = answered.filter(Boolean).length;
+      const percent = Math.round((count / totalQuestions) * 100);
+      document.getElementById("answered").textContent = count;
+      document.getElementById("progress").textContent = percent + "%";
+
+      if (count === totalQuestions) {
+        document.getElementById("completionMessage").style.display = "block";
+      }
+    }
+
+    function showAnswers() {
+      const answers = document.querySelectorAll(".correct-answer");
+      answers.forEach((el, i) => {
+        setTimeout(() => {
+          el.style.display = "block";
+        }, i * 100);
+      });
+
+      const revealBtn = document.getElementById("revealBtn");
+      revealBtn.disabled = true;
+      revealBtn.innerHTML = '<i class="fas fa-check"></i> Answers Shown';
+      revealBtn.style.background = '#22543d';
+      revealBtn.style.borderColor = '#22543d';
+    }
+  </script>
+</body>
+</html>

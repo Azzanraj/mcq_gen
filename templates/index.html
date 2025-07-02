@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Generated Quiz</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='stylesi.css') }}" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>AI Generated Quiz</h1>
+      <p>Questions from your uploaded content</p>
+      <div class="ai-badge">🤖 AI Powered</div>
+    </div>
+
+    <div class="form-card">
+      <form id="quizForm" method="POST" enctype="multipart/form-data">
+        <div class="form-section">
+          <h3>Upload Content</h3>
+          <div class="form-group">
+            <label for="file">Upload File (PDF or TXT)</label>
+            <div class="file-upload-area">
+              <input type="file" id="file" name="files[]" multiple accept=".pdf,.txt">
+              <div class="file-upload-text">
+                <strong>Choose files</strong> or drag and drop<br>
+                <small>PDF, TXT files supported</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="text">Or Paste Text Below:</label>
+            <textarea class="form-control" id="text" name="text" rows="5" placeholder="Paste your content here to generate quiz questions..."></textarea>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Quiz Settings</h3>
+          <div class="form-group">
+            <label for="num_questions">Number of Questions</label>
+            <div class="number-input-group">
+              <input type="number" class="form-control" id="num_questions" name="num_questions" min="1" max="50" value="10">
+              <div class="range-indicator">1 to 50 questions</div>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-generate">Generate MCQs</button>
+      </form>
+    </div>
+  </div>
+</body>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const fileInput = document.getElementById('file');
+  const textInput = document.getElementById('text');
+  const fileUploadArea = document.querySelector('.file-upload-area');
+  const fileUploadText = document.querySelector('.file-upload-text');
+  const form = document.getElementById('quizForm');
+  const generateBtn = document.querySelector('.btn-generate');
+
+  fileUploadArea.addEventListener('click', function () {
+    fileInput.click();
+  });
+
+  fileInput.addEventListener('change', function (e) {
+    updateFileUploadText(e.target.files);
+  });
+
+  fileUploadArea.addEventListener('dragover', function (e) {
+    e.preventDefault();
+    fileUploadArea.classList.add('dragover');
+  });
+
+  fileUploadArea.addEventListener('dragleave', function (e) {
+    e.preventDefault();
+    fileUploadArea.classList.remove('dragover');
+  });
+
+  fileUploadArea.addEventListener('drop', function (e) {
+    e.preventDefault();
+    fileUploadArea.classList.remove('dragover');
+    const files = e.dataTransfer.files;
+    fileInput.files = files;
+    updateFileUploadText(files);
+  });
+
+  function updateFileUploadText(files) {
+    if (files.length > 0) {
+      const fileNames = Array.from(files).map(file => file.name).join(', ');
+      fileUploadText.innerHTML = `<strong>Selected:</strong> ${fileNames}`;
+    } else {
+      fileUploadText.innerHTML = '<strong>Choose files</strong> or drag and drop<br><small>PDF, TXT files supported</small>';
+    }
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    const textContent = textInput.value.trim();
+    const filesSelected = fileInput.files.length > 0;
+    const numQuestions = document.getElementById('num_questions').value;
+
+    if (!textContent && !filesSelected) {
+      alert('Please either upload a file or paste text content to generate questions.');
+      return;
+    }
+
+    if (!numQuestions || numQuestions < 1 || numQuestions > 50) {
+      alert('Please enter a valid number of questions (1-50).');
+      return;
+    }
+
+    if (filesSelected) {
+      const validTypes = ['application/pdf', 'text/plain', '.pdf', '.txt'];
+      const files = Array.from(fileInput.files);
+      const invalidFiles = files.filter(file => {
+        const extension = file.name.toLowerCase().split('.').pop();
+        return !validTypes.includes(file.type) && !['pdf', 'txt'].includes(extension);
+      });
+
+      if (invalidFiles.length > 0) {
+        alert('Please upload only PDF or TXT files.');
+        return;
+      }
+    }
+
+    generateBtn.disabled = true;
+    generateBtn.textContent = 'Generating MCQs...';
+
+    // ✅ Actually submit the form
+    form.submit();
+  });
+
+  textInput.addEventListener('input', function () {
+    validateForm();
+  });
+
+  fileInput.addEventListener('change', function () {
+    validateForm();
+  });
+
+  function validateForm() {
+    const textContent = textInput.value.trim();
+    const filesSelected = fileInput.files.length > 0;
+
+    if (textContent || filesSelected) {
+      generateBtn.disabled = false;
+      generateBtn.style.opacity = '1';
+    } else {
+      generateBtn.disabled = true;
+      generateBtn.style.opacity = '0.6';
+    }
+  }
+
+  validateForm();
+
+  const numQuestionsInput = document.getElementById('num_questions');
+  numQuestionsInput.addEventListener('input', function () {
+    const value = parseInt(this.value);
+    if (value < 1) {
+      this.value = 1;
+    } else if (value > 50) {
+      this.value = 50;
+    }
+  });
+
+  textInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && e.ctrlKey) {
+      form.dispatchEvent(new Event('submit'));
+    }
+  });
+});
+</script>
+</html>
